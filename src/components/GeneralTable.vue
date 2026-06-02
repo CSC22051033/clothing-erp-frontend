@@ -1,16 +1,20 @@
 <script setup>
     import { computed, ref, watch } from 'vue'
-    import { Edit, Delete } from '@element-plus/icons-vue' 
+    import { Edit, Delete } from '@element-plus/icons-vue'
 
     const emit = defineEmits(['edit', 'delete'])
 
-    const pageSize = 1;
+    const pageSize = 10;
 
     // 定义 props 接收父组件传过来的数据
     const props = defineProps({
         data: {
             type: Array,
             required: true
+        },
+        columnsOrder: {
+            type: Array,
+            default: undefined
         },
         loading: {
             type: Boolean,
@@ -22,10 +26,27 @@
         }
     })
 
-    // 动态计算所有列名（提取第一行对象的所有键，如果没有数据则返回空数组）
+    // 动态计算所有列名
     const columns = computed(() => {
         if (props.data.length === 0) return []
-        return Object.keys(props.data[0])
+        
+        // 收集所有数据行中实际存在的字段
+        const availableKeysSet = new Set()
+        for (const item of props.data) {
+            for (const key of Object.keys(item)) {
+                availableKeysSet.add(key)
+            }
+        }
+        
+        // 判断是否传入了列顺序配置
+        if (props.columnsOrder !== undefined) {
+            // 按传入顺序过滤出实际存在的字段（不存在的字段自动忽略）
+            const ordered = props.columnsOrder.filter(key => availableKeysSet.has(key))
+            return ordered
+        } else {
+            // 未传入列顺序配置时，使用第一行数据的键顺序（保持原有行为）
+            return Object.keys(props.data[0])
+        }
     })
 
     // 修改：将整行数据传递给父组件
@@ -123,7 +144,7 @@
             </table>
         </div>
         <!-- 分页栏：固定在视口底部 -->
-        <div class="pageDiv" v-if="totalPages > 1">
+        <div class="pageDiv">
             <el-button @click="prevPage" :disabled="currentPage <= 1" class="page-btn" type="primary" plain>上一页</el-button>
             <span class="page-info">第 {{ currentPage }} / {{ totalPages }} 页</span>
             <el-button @click="nextPage" :disabled="currentPage >= totalPages" class="page-btn" type="primary" plain>下一页</el-button>
