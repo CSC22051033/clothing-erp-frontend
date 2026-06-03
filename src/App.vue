@@ -28,6 +28,8 @@ const currentTab = computed(() => tabsStore.currentTab)
           :data="currentTab.data || []"
           :loading="currentTab.loading"
           :columnsOrder="currentTab.columnsOrder"
+          :columnLabels="currentTab.columnLabels || {}"
+          :replaceRules="currentTab.replaceRules || []"
         />
         <el-empty v-else description="请从左侧菜单打开功能" />
       </div>

@@ -4,17 +4,24 @@
 
     const emit = defineEmits(['edit', 'delete'])
 
-    const pageSize = 10;
-
-    // 定义 props 接收父组件传过来的数据
+    //#region 定义 props 接收父组件传过来的数据
     const props = defineProps({
         data: {
             type: Array,
             required: true
         },
-        columnsOrder: {
+        columnsOrder: {     // 表头顺序
             type: Array,
             default: undefined
+        },
+        columnLabels: {     // 表头显示文本映射
+            type: Object,
+            default: () => ({})
+        },
+        replaceRules:{      // 替换规则
+            // 格式 [{ column: '列名', from: 原值, to: 替换值 }, ……]
+            type: Array,
+            default: () => []
         },
         loading: {
             type: Boolean,
@@ -25,6 +32,7 @@
             default: ''
         }
     })
+    //#endregion
 
     // 动态计算所有列名
     const columns = computed(() => {
@@ -49,6 +57,18 @@
         }
     })
 
+    // 根据替换规则获取单元格显示值（仅影响展示，不修改原始数据）
+    const displayValue = (item, columnKey) => {
+        const originalValue = item[columnKey]
+        if (!props.replaceRules || props.replaceRules.length === 0) {
+            return originalValue
+        }
+        const matchedRule = props.replaceRules.find(rule => 
+            rule.column === columnKey && rule.from === originalValue
+        )
+        return matchedRule ? matchedRule.to : originalValue
+    }
+
     // 修改：将整行数据传递给父组件
     const handleEdit = (item) => {
         emit('edit', item)
@@ -61,8 +81,9 @@
         }
     }
 
-    // 分页功能实现
+    //#region 分页功能实现
     const currentPage = ref(1);
+    const pageSize = 10;
     
     const totalPages = computed(() => {
         const total = props.data.length
@@ -97,6 +118,7 @@
             currentPage.value = 1
         }
     })
+    //#endregion
 </script>
 
 <template>
@@ -113,7 +135,7 @@
                 <thead>
                     <tr>
                         <th v-for="key in columns" :key="key">
-                            {{ key }}
+                            {{ columnLabels[key] || key }}
                         </th>
                         <th class="action-header">操作</th>
                     </tr>
@@ -121,7 +143,7 @@
                 <tbody>
                     <tr v-for="(item, index) in dataCurrent" :key="item.id ?? index">
                         <td v-for="key in columns" :key="key">
-                            {{ item[key] }}
+                            {{ displayValue(item, key) }}
                         </td>
                         <td class="action-cell">
                             <div class="action-group">

@@ -15,6 +15,17 @@ const handleSelect = (index) => {
             id: 'user',
             title: '用户管理',
             columnsOrder: ['userId', 'status', 'username', 'realName', 'password'] ,
+            columnLabels: {
+                userId: '用户ID',
+                status: '状态',
+                username: '登录名',
+                realName: '真实姓名',
+                password: '密码'
+            },
+            replaceRules: [
+                { column: 'status', from: 1, to: '正常' },
+                { column: 'status', from: 0, to: '禁用' }
+            ],
             fetchData: async () => {
                 const { fetchUsers } = await import('@/api/user')
                 return await fetchUsers()
